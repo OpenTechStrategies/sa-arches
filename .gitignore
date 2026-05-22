@@ -44,3 +44,9 @@ webpack-stats.json
 .DS_STORE
 CACHE
 frontend_configuration
+
+## direnv
+.env.d
+
+## AI
+.claude
