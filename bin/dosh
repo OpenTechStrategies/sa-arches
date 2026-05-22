@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Do - The Simplest Build Tool on Earth.
+# Documentation and examples see https://github.com/8gears/do
+
+SCRIPTNAME=`basename "$0"`
+BASEDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )
+cd ${BASEDIR}
+
+IMAGE="registry.librehq.com/ots/arches/sa-arches"
+
+_arches_version() {
+  grep -E '^version\s*=' "${BASEDIR}/pyproject.toml" | head -1 | sed -E 's/^version\s*=\s*"([^"]+)".*/\1/'
+}
+
+_tag() {
+  local version=$(_arches_version)
+  local date=$(date -u +%Y%m%d)
+  local sha=$(git rev-parse --short=8 HEAD)
+  echo "${version}-${date}-${sha}"
+}
+
+build-image() {
+  local tag=$(_tag)
+  podman build -t "${IMAGE}:${tag}" "${BASEDIR}"
+  echo "${IMAGE}:${tag}"
+}
+
+push-image() {
+  local tag=$(_tag)
+  podman push "${IMAGE}:${tag}"
+  echo "${IMAGE}:${tag}"
+}
+
+if [[ "$1" == "--completions" ]]; then
+    compgen -A function | grep '^[^_]'
+    exit 0
+fi
+
+"$@"
+[ "$#" -gt 0 ] || printf "Usage:\n\t./${SCRIPTNAME} %s\n" "($(compgen -A function | grep '^[^_]' | paste -sd '|' -))"
